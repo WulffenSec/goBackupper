@@ -14,22 +14,32 @@ const BannerHi string = `           ___          _
  \__, \___/___/\__,_\__|_\_\\_,_| .__/ .__/\___|_|
  |___/                          |_|  |_|`
 
-const BannerLo string = "                Github: WulffenSec | Version: 1.0"
+const BannerLo string = "                Github: WulffenSec | Version: 1.1"
 
 func main() {
     // Check Args
-	if len(os.Args) != 3 || os.Args[1] == "-h" || os.Args[1] == "--help" {
+	if len(os.Args) < 3 || os.Args[1] == "-h" || os.Args[1] == "--help" {
 		fmt.Println("Backups recursively the source directory and its subdirectories to the target directory.")
-		fmt.Println("Usage:\n$", os.Args[0], "path-to-source-directory path-to-target-directory")
+		fmt.Println("Usage:\n$", os.Args[0], "path-to-source-directory path-to-target-directory -slient")
 		os.Exit(1)
 	}
+    
+    // No Banner
+    silent := false
+    if len(os.Args) > 3 {
+        if os.Args[3] == "-silent" {
+                silent = true
+            }
+        }
 
     // Banner
-	red := color.New(color.FgRed).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
-	fmt.Printf("%s\n%s\n", red(BannerHi), yellow(BannerLo))
+    if silent == false {
+        red := color.New(color.FgRed).SprintFunc()
+        yellow := color.New(color.FgYellow).SprintFunc()
+        fmt.Printf("%s\n%s\n", red(BannerHi), yellow(BannerLo))
 
-    fmt.Printf("Running %s, this may %s.\n", yellow("diff"), yellow("take a while"))
+        fmt.Printf("Running %s, this may %s.\n", yellow("diff"), yellow("take a while"))
+    }
 	for true {
 		// Loops until no differences are found.
 		results := makeBackup()
