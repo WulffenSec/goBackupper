@@ -14,7 +14,7 @@ const BannerHi string = `           ___          _
  \__, \___/___/\__,_\__|_\_\\_,_| .__/ .__/\___|_|
  |___/                          |_|  |_|`
 
-const BannerLo string = "                Github: WulffenSec | Version: 1.1"
+const BannerLo string = "                Github: WulffenSec | Version: 1.2"
 
 func main() {
     // Check Args
@@ -37,7 +37,6 @@ func main() {
         red := color.New(color.FgRed).SprintFunc()
         yellow := color.New(color.FgYellow).SprintFunc()
         fmt.Printf("%s\n%s\n", red(BannerHi), yellow(BannerLo))
-
         fmt.Printf("Running %s, this may %s.\n", yellow("diff"), yellow("take a while"))
     }
 	for true {
@@ -58,6 +57,10 @@ func makeBackup() bool {
 
 	sourceDir := os.Args[1]
 	targetDir := os.Args[2]
+    _, err := os.Open(targetDir)
+    if err != nil {
+        os.Mkdir(targetDir, 0755)
+    }
 
 	diff, err := exec.Command("diff", "-qr", sourceDir, targetDir).CombinedOutput()
 	if err == nil {
