@@ -2,6 +2,13 @@
 
 Creates a backup (copy) of a given directory recursively (including all the files) to a target directory. Also files not longer present in the source directory will be deleted from the target directory.
 
+Options:
+
+- source: Path for the source directory.
+- target: Path for the target directory.
+- silent: This mode will not display the banner.
+- no-rm: Doesn't delete files from target directory not longer present in source directory.
+
 ***Example:***
 
 - Source Directory
@@ -18,7 +25,8 @@ A test folder and files is provided to check functionality of this app. Also a t
 ***Usage:***
 
 ```shell
-goBackupper /path/to/source/dir/ /path/to/target/dir/
+goBackupper -source /path/to/source/dir/ -target /path/to/target/dir/
+goBackupper -source /path/to/source/dir/ -target /path/to/target/dir/ -silent -no-rm
 ```
 
 --------

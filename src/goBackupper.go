@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+    "flag"
 )
 
 const BannerHi string = `           ___          _
@@ -17,55 +18,60 @@ const BannerHi string = `           ___          _
 const BannerLo string = "                Github: WulffenSec | Version: 1.2"
 
 func main() {
-    // Check Args
-	if len(os.Args) < 3 || os.Args[1] == "-h" || os.Args[1] == "--help" {
-		fmt.Println("Backups recursively the source directory and its subdirectories to the target directory.")
-		fmt.Println("Usage:\n$", os.Args[0], "path-to-source-directory path-to-target-directory -slient")
-		os.Exit(1)
-	}
-    
-    // No Banner
-    silent := false
-    if len(os.Args) > 3 {
-        if os.Args[3] == "-silent" {
-                silent = true
-            }
-        }
+    // Parse Args
+    source := flag.String("source", "", "Source Directory.")
+    target := flag.String("target", "", "Target Directory.")
+    silent := flag.Bool("silent", false, "No banner mode.")
+    noRm := flag.Bool("no-rm", false, "Don't remove target directory if doesn't exist on source.")
+    flag.Parse()
+
+    if *source == "" {
+        fmt.Println("Please specify a source directory.")
+        os.Exit(1)
+    }
+    if *target == "" {
+        fmt.Println("Please specify a target directory.")
+        os.Exit(1)
+    }
 
     // Banner
-    if silent == false {
+    if !*silent {
         red := color.New(color.FgRed).SprintFunc()
         yellow := color.New(color.FgYellow).SprintFunc()
         fmt.Printf("%s\n%s\n", red(BannerHi), yellow(BannerLo))
         fmt.Printf("Running %s, this may %s.\n", yellow("diff"), yellow("take a while"))
     }
-	for true {
-		// Loops until no differences are found.
-		results := makeBackup()
-		if results == true {
-			break
-		}
-	}
+
+    makeBackup(*source, *target, *noRm)
 }
 
-func makeBackup() bool {
+func makeBackup(source, target string, noRm bool) {
     // Colors
 	red := color.New(color.FgRed).SprintFunc()
 	blue := color.New(color.FgBlue).SprintFunc()
 	cyan := color.New(color.FgCyan).SprintFunc()
 	green := color.New(color.FgGreen).SprintFunc()
+    yellow := color.New(color.FgYellow).SprintFunc()
+    
+	sourceDir := source
+	targetDir := target
+    noRemove := noRm
 
-	sourceDir := os.Args[1]
-	targetDir := os.Args[2]
     _, err := os.Open(targetDir)
     if err != nil {
-        os.Mkdir(targetDir, 0755)
+       err := os.MkdirAll(targetDir, 0755)
+        if err != nil {
+            fmt.Println("Error creating target directory: ", err)
+            os.Exit(1)
+        }
     }
+
+    os.Exit(1)
 
 	diff, err := exec.Command("diff", "-qr", sourceDir, targetDir).CombinedOutput()
 	if err == nil {
 		fmt.Printf("%s No differences found.\n", green("[O]"))
-		return true
+		return
 	} else if err.Error() == "exit status 2" {
 		fmt.Println(strings.Split(string(diff), "\n")[0])
 		os.Exit(2)
@@ -93,20 +99,23 @@ func makeBackup() bool {
 				os.Exit(1)
 			}
 		} else if strings.HasPrefix(line, "Only in "+targetDir) {
-			// Delete files persent only in target.
-			targetFile := strings.Split(line, "Only in ")[1]
-			targetFile = strings.Replace(targetFile, "/: ", "/", -1)
-			targetFile = strings.Replace(targetFile, ": ", "/", -1)
-			file := strings.Split(line, "Only in ")[1]
-			file = strings.Split(file, ": ")[1]
-			fmt.Printf("%s Deleting %s from backup location.\n", red("[X]"), red("\""+file+"\""))
-			cmd := exec.Command("rm", "-rf", targetFile)
-			err := cmd.Run()
-			if err != nil {
-				fmt.Printf("Error: %s\n", err)
-				os.Exit(1)
-			}
-
+            // Delete files persent only in target.
+            targetFile := strings.Split(line, "Only in ")[1]
+            targetFile = strings.Replace(targetFile, "/: ", "/", -1)
+            targetFile = strings.Replace(targetFile, ": ", "/", -1)
+            file := strings.Split(line, "Only in ")[1]
+            file = strings.Split(file, ": ")[1]
+            if noRemove {
+                fmt.Printf("%s File found only in backup: %s. \"no-rm\" flag set, not doing anything.\n", yellow("[!]"), yellow("\""+file+"\""))
+            } else {
+                fmt.Printf("%s Deleting %s from backup location.\n", red("[X]"), red("\""+file+"\""))
+                cmd := exec.Command("rm", "-rf", targetFile)
+                err := cmd.Run()
+                if err != nil {
+                    fmt.Printf("Error: %s\n", err)
+                    os.Exit(1)
+                }
+            }
 		} else if strings.HasPrefix(line, "Files ") {
 			// Backup files present in both source and target.
 			bothFiles := strings.Split(line, " and ")
@@ -123,5 +132,5 @@ func makeBackup() bool {
 			}
 		}
 	}
-	return false
+	return
 }
