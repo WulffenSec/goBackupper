@@ -66,8 +66,6 @@ func makeBackup(source, target string, noRm bool) {
         }
     }
 
-    os.Exit(1)
-
 	diff, err := exec.Command("diff", "-qr", sourceDir, targetDir).CombinedOutput()
 	if err == nil {
 		fmt.Printf("%s No differences found.\n", green("[O]"))
