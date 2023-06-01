@@ -70,9 +70,6 @@ func makeBackup(source, target string, noRm bool) {
 	if err == nil {
 		fmt.Printf("%s No differences found.\n", green("[O]"))
 		return
-	} else if err.Error() == "exit status 2" {
-		fmt.Println(strings.Split(string(diff), "\n")[0])
-		os.Exit(2)
 	}
 	for _, line := range strings.Split(string(diff), "\n") {
 		if line == "" {
